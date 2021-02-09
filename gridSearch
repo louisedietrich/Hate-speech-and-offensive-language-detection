@@ -1,0 +1,51 @@
+from sklearn.model_selection import GridSearchCV
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, make_scorer, confusion_matrix
+from sklearn.model_selection import StratifiedKFold
+import numpy as np
+
+#pipe = Pipeline([('classifier' , LogisticRegression())])
+pipe = LogisticRegression()
+solvers = ['newton-cg', 'lbfgs', 'liblinear']
+penalty = ['l1','l2']
+c_values = np.logspace(-4, 4, 20)
+n_features = np.arange(1, len(features_list))
+param_grid = {
+    'solver' : solvers,
+    'penalty' : penalty,
+    'C' : c_values
+}
+cv = StratifiedKFold(n_splits=10)
+
+scorers = {
+    'precision_score': make_scorer(precision_score),
+    'recall_score': make_scorer(recall_score),
+    'accuracy_score': make_scorer(accuracy_score),
+    'f1_score' : make_scorer(f1_score)
+}
+
+
+
+
+def grid_search_wrapper(refit_score='f1_score'):
+
+    cv = StratifiedKFold(n_splits=10)
+    best_clf = GridSearchCV(pipe, param_grid, scoring=scorers, refit=refit_score,
+                           cv=cv, return_train_score=True, n_jobs=-1)
+    best_clf.fit(features_train, labels_train)
+
+    # make the predictions
+    y_pred = best_clf.predict(features_test)
+
+    print('Best params for {}'.format(refit_score))
+    print(best_clf.best_params_)
+
+    # confusion matrix on the test data.
+    print('\nConfusion matrix of Logistic Regression optimized for {} on the test data:'.format(refit_score))
+    print(pd.DataFrame(confusion_matrix(labels_test, y_pred),
+                 columns=['pred_neg', 'pred_pos'], index=['neg', 'pos']))
+    return best_clf
+    
+    
+    
+    grid_search_clf = grid_search_wrapper(refit_score='f1_score')
